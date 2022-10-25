@@ -1,4 +1,4 @@
-import { findFirstPeak } from '../helpers';
+import { findFirstPeak, findPeaks } from '../helpers';
 import assert from 'assert';
 
 describe('findFirstPeak', function() {
@@ -21,3 +21,40 @@ describe('findFirstPeak', function() {
   });
 });
 
+describe('findPeaks', function() {
+  it('empty tree', function() {
+    assert.equal(findPeaks(0, findFirstPeak(0)), 1)
+  });
+
+  it('size 1', function() {
+    assert.deepEqual(findPeaks(1, findFirstPeak(1)), [1])
+  });
+
+  it('size 3', function() {
+    assert.deepEqual(findPeaks(3, findFirstPeak(3)), [3])
+  });
+
+  it('size 4', function() {
+    assert.deepEqual(findPeaks(4, findFirstPeak(4)), [3, 4])
+  });
+
+  it('size 7', function() {
+    assert.deepEqual(findPeaks(7, findFirstPeak(7)), [7])
+  });
+
+  it('size 8', function() {
+    assert.deepEqual(findPeaks(8, findFirstPeak(8)), [7, 8])
+  });
+
+  it('size 10', function() {
+    assert.deepEqual(findPeaks(10, findFirstPeak(10)), [7, 10])
+  });
+
+  it('size 11', function() {
+    assert.deepEqual(findPeaks(11, findFirstPeak(11)), [7, 11])
+  });
+
+  it('size 15', function() {
+    assert.deepEqual(findPeaks(15, findFirstPeak(15)), [15])
+  });
+});
