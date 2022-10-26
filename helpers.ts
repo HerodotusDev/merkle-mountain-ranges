@@ -56,6 +56,10 @@ export const getHeight = (pos: number): number => {
   return bitLength(pos)
 }
 
+export const siblingOffest = (height: number): number => {
+  return (2 << height) - 1;
+}
+
 const bintree_jump_right_sibling = (num: number) => {
   const height = getHeight(num);
   return num + (1 << (height + 1)) - 1;
