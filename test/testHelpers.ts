@@ -1,5 +1,37 @@
-import { findFirstPeak, findPeaks } from '../helpers';
+import { findFirstPeak, findPeaks, getHeight } from '../helpers';
 import assert from 'assert';
+
+describe.only('getHeight', function() {
+  it('node 0', function() {
+    assert.equal(getHeight(0), 1);
+  });
+
+  it('node 1', function() {
+    assert.equal(getHeight(1), 1);
+  });
+
+  it('node 2', function() {
+    assert.equal(getHeight(2), 2);
+  });
+
+  it('node 3', function() {
+    assert.equal(getHeight(3), 1);
+  });
+
+  it('node 4', function() {
+    assert.equal(getHeight(4), 1);
+  });
+
+  it('node 5', function() {
+    assert.equal(getHeight(5), 2);
+  });
+  it('node 6', function() {
+    assert.equal(getHeight(6), 3);
+  });
+  it('node 7', function() {
+    assert.equal(getHeight(7), 1);
+  });
+});
 
 describe('findFirstPeak', function() {
   it('empty tree', function() {
