@@ -1,7 +1,7 @@
 import { findFirstPeak, findPeaks, getHeight } from '../helpers';
 import assert from 'assert';
 
-describe.only('getHeight', function() {
+describe('getHeight', function() {
   it('node 0', function() {
     assert.equal(getHeight(0), 1);
   });

@@ -1,7 +1,7 @@
 import { pedersen } from "starknet/dist/utils/hash";
 import { getHeight, siblingOffest } from "./helpers";
 
-class MMR {
+export class MMR {
   hashes: any;
   lastPos: number;
 
@@ -18,7 +18,7 @@ class MMR {
     let hash = pedersen([this.lastPos, elem]);
     this.hashes[this.lastPos] = hash;
 
-    let height = 0;
+    let height = 1;
     let pos = this.lastPos;
 
     // If the height of the next node is higher then the height of current node
@@ -28,6 +28,9 @@ class MMR {
 
       let left = this.lastPos - (2 << height);
       let right = left + siblingOffest(height);
+
+      console.log(left)
+      console.log(right)
 
       let parentHash = pedersen([this.lastPos, pedersen([this.hashes[left], this.hashes[right]])]);
       this.hashes[this.lastPos] = parentHash;
