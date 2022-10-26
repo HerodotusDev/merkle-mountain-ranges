@@ -2,7 +2,7 @@ import assert from "assert";
 import { pedersen } from "starknet/dist/utils/hash";
 import { MMR } from "..";
 
-describe('Append', function() {
+describe.only('Append', function() {
   let mmr: MMR;
 
   before(function () {
@@ -79,6 +79,67 @@ describe.only('Node content (hashes)', function() {
     nodes.push(pedersen([0, 0]));
     nodes.push(pedersen([1, 1]));
     nodes.push(pedersen([2, pedersen([nodes[0], nodes[1]])]));
+
+    for(let i=0; i < nodes.length; i++) {
+      assert.equal(mmr.hashes[i], nodes[i]);
+    }
+  });
+
+  it('3 leaves', function() {
+    const elems = 3;
+
+    for(let i=0; i < elems; i++) {
+      mmr.append(i);
+    }
+
+    const nodes = [];
+    nodes.push(pedersen([0, 0]));
+    nodes.push(pedersen([1, 1]));
+    nodes.push(pedersen([2, pedersen([nodes[0], nodes[1]])]));
+    nodes.push(pedersen([3, 2]));
+
+    for(let i=0; i < nodes.length; i++) {
+      assert.equal(mmr.hashes[i], nodes[i]);
+    }
+  });
+
+  it('4 leaves', function() {
+    const elems = 4;
+
+    for(let i=0; i < elems; i++) {
+      mmr.append(i);
+    }
+
+    const nodes = [];
+    nodes.push(pedersen([0, 0]));
+    nodes.push(pedersen([1, 1]));
+    nodes.push(pedersen([2, pedersen([nodes[0], nodes[1]])]));
+    nodes.push(pedersen([3, 2]));
+    nodes.push(pedersen([4, 3]));
+    nodes.push(pedersen([5, pedersen([nodes[3], nodes[4]])]));
+    nodes.push(pedersen([6, pedersen([nodes[2], nodes[5]])]));
+
+    for(let i=0; i < nodes.length; i++) {
+      assert.equal(mmr.hashes[i], nodes[i]);
+    }
+  });
+
+  it('5 leaves', function() {
+    const elems = 5;
+
+    for(let i=0; i < elems; i++) {
+      mmr.append(i);
+    }
+
+    const nodes = [];
+    nodes.push(pedersen([0, 0]));
+    nodes.push(pedersen([1, 1]));
+    nodes.push(pedersen([2, pedersen([nodes[0], nodes[1]])]));
+    nodes.push(pedersen([3, 2]));
+    nodes.push(pedersen([4, 3]));
+    nodes.push(pedersen([5, pedersen([nodes[3], nodes[4]])]));
+    nodes.push(pedersen([6, pedersen([nodes[2], nodes[5]])]));
+    nodes.push(pedersen([7, 4]));
 
     for(let i=0; i < nodes.length; i++) {
       assert.equal(mmr.hashes[i], nodes[i]);

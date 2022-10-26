@@ -60,6 +60,10 @@ export const siblingOffest = (height: number): number => {
   return (2 << height) - 1;
 }
 
+export const parentOffset = (height: number): number => {
+  return 2 << height;
+}
+
 const bintree_jump_right_sibling = (num: number) => {
   const height = getHeight(num);
   return num + (1 << (height + 1)) - 1;
