@@ -2,7 +2,7 @@ import assert from "assert";
 import { pedersen } from "starknet/dist/utils/hash";
 import { MMR } from "..";
 
-describe.only('Append', function() {
+describe('Append', function() {
   let mmr: MMR;
 
   before(function () {
@@ -55,7 +55,7 @@ describe.only('Append', function() {
   });
 });
 
-describe.only('Node content (hashes)', function() {
+describe('Node content (hashes)', function() {
   let mmr: MMR;
 
   beforeEach(function() {
