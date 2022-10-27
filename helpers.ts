@@ -8,7 +8,7 @@ export const findFirstPeak = (treeSize: number) => {
     return 1;
   }
   return top;
-}
+};
 
 export const findPeaks = (
   treeSize: number,
@@ -17,7 +17,7 @@ export const findPeaks = (
 ): number[] => {
   // Check for siblings without parents
   if (getHeight(treeSize + 1) > getHeight(treeSize)) return [];
-  
+
   const peak = firstPeak;
   let nextPeak = bintree_jump_right_sibling(peak);
   while (nextPeak > treeSize) {
@@ -41,28 +41,28 @@ export const getHeight = (pos: number): number => {
 
   // Number with all bits 1 with the same length as num
   function ones(num: number) {
-    return (1 << bitLength(num)) - 1 == num
+    return (1 << bitLength(num)) - 1 == num;
   }
 
   // Start from index 1
-  pos += 1
+  pos += 1;
 
   // Travel left until reaching leftmost branch (all bits 1)
   while (!ones(pos)) {
-    let msb = 1 << bitLength(pos) - 1
-    pos -= msb - 1
+    let msb = 1 << (bitLength(pos) - 1);
+    pos -= msb - 1;
   }
 
-  return bitLength(pos)
-}
+  return bitLength(pos);
+};
 
-export const siblingOffest = (height: number): number => {
+export const siblingOffset = (height: number): number => {
   return (2 << height) - 1;
-}
+};
 
 export const parentOffset = (height: number): number => {
   return 2 << height;
-}
+};
 
 const bintree_jump_right_sibling = (num: number) => {
   const height = getHeight(num);

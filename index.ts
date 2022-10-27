@@ -1,5 +1,6 @@
+import { getHeight, parentOffset, siblingOffset } from "./helpers";
+
 import { pedersen } from "starknet/dist/utils/hash";
-import { getHeight, siblingOffest, parentOffset } from "./helpers";
 
 export class MMR {
   hashes: any;
@@ -25,16 +26,19 @@ export class MMR {
     while (getHeight(this.lastPos + 1) > height) {
       this.lastPos++;
 
-      let left = this.lastPos - parentOffset(height-1);
-      let right = left + siblingOffest(height-1);
+      let left = this.lastPos - parentOffset(height - 1);
+      let right = left + siblingOffset(height - 1);
 
-      let parentHash = pedersen([this.lastPos, pedersen([this.hashes[left], this.hashes[right]])]);
+      let parentHash = pedersen([
+        this.lastPos,
+        pedersen([this.hashes[left], this.hashes[right]]),
+      ]);
       this.hashes[this.lastPos] = parentHash;
 
-      height++
+      height++;
     }
 
-    return pos
+    return pos;
   }
 }
 
@@ -44,18 +48,18 @@ export class NoStorageMMR {
 
   constructor() {
     this.lastPos = -1;
-    this.root = '';
+    this.root = "";
   }
 
   bagPeaks(peaks: string[]) {
     if (peaks.length == 0) {
-      return '';
+      return "";
     }
 
-    let res = peaks[peaks.length-1];
+    let res = peaks[peaks.length - 1];
 
-    for(let i=peaks.length-2; i >= 0; i--) {
-      res = pedersen([peaks[i], res]); 
+    for (let i = peaks.length - 2; i >= 0; i--) {
+      res = pedersen([peaks[i], res]);
     }
 
     return res;
@@ -69,7 +73,7 @@ export class NoStorageMMR {
     if (this.bagPeaks(peaks) != this.root) {
       return -1;
     }
-    
+
     let hash = pedersen([this.lastPos, elem]);
     peaks.push(hash);
 
@@ -83,13 +87,15 @@ export class NoStorageMMR {
       const rightHash = peaks.pop();
       const leftHash = peaks.pop();
 
-      let parentHash = pedersen([this.lastPos, pedersen([leftHash, rightHash])]);
+      let parentHash = pedersen([
+        this.lastPos,
+        pedersen([leftHash, rightHash]),
+      ]);
       peaks.push(parentHash);
 
-      height++
+      height++;
     }
 
     this.root = this.bagPeaks(peaks);
   }
 }
-
