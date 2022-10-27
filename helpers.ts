@@ -33,27 +33,24 @@ export const findPeaks = (
 // the height of a node correspond to the number of 1 digits (in binary)
 // on the leftmost branch of the tree, minus 1
 // To travel left on a tree we can subtract the position by it's MSB, minus 1
-export const getHeight = (pos: number): number => {
+export const getHeight = (num: number): number => {
   // Returns the number of bits in num
   function bitLength(num: number) {
-    return (num >>> 0).toString(2).length;
+    return num.toString(2).length;
   }
 
   // Number with all bits 1 with the same length as num
-  function ones(num: number) {
+  function allOnes(num: number) {
     return (1 << bitLength(num)) - 1 == num;
   }
 
-  // Start from index 1
-  pos += 1;
-
+  let h = num;
   // Travel left until reaching leftmost branch (all bits 1)
-  while (!ones(pos)) {
-    let msb = 1 << (bitLength(pos) - 1);
-    pos -= msb - 1;
+  while (!allOnes(h)) {
+    h = h - ((1 << (bitLength(h) - 1)) - 1);
   }
 
-  return bitLength(pos);
+  return bitLength(h) - 1;
 };
 
 export const siblingOffset = (height: number): number => {
@@ -65,12 +62,12 @@ export const parentOffset = (height: number): number => {
 };
 
 const bintree_jump_right_sibling = (num: number) => {
-  const height = getHeight(num);
+  const height = getHeight(num) - 1;
   return num + (1 << (height + 1)) - 1;
 };
 
 const bintreeMoveDownLeft = (num: number) => {
-  let height = getHeight(num);
+  let height = getHeight(num) - 1;
   if (height === 0) {
     return 0;
   }
