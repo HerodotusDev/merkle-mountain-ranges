@@ -8,7 +8,7 @@ export class MMR {
 
     constructor() {
         this.hashes = {};
-        this.lastPos = -1;
+        this.lastPos = 0;
     }
 
     append(elem: number) {
@@ -18,7 +18,7 @@ export class MMR {
         let hash = pedersen([this.lastPos, elem]);
         this.hashes[this.lastPos] = hash;
 
-        let height = 1;
+        let height = 0;
         let pos = this.lastPos;
 
         // If the height of the next node is higher then the height of current node
@@ -26,8 +26,8 @@ export class MMR {
         while (getHeight(this.lastPos + 1) > height) {
             this.lastPos++;
 
-            let left = this.lastPos - parentOffset(height - 1);
-            let right = left + siblingOffset(height - 1);
+            let left = this.lastPos - parentOffset(height);
+            let right = left + siblingOffset(height);
 
             let parentHash = pedersen([
                 this.lastPos,
@@ -47,7 +47,7 @@ export class NoStorageMMR {
     root: string;
 
     constructor() {
-        this.lastPos = -1;
+        this.lastPos = 0;
         this.root = '';
     }
 
@@ -77,7 +77,7 @@ export class NoStorageMMR {
         let hash = pedersen([this.lastPos, elem]);
         peaks.push(hash);
 
-        let height = 1;
+        let height = 0;
 
         // If the height of the next node is higher then the height of current node
         // It means that the next node is a parent of current, thus merging happens
