@@ -83,13 +83,13 @@ describe('Node content (hashes)', function() {
     }
 
     const nodes = [];
-    nodes.push(pedersen([0, 0]));
     nodes.push(pedersen([1, 1]));
-    nodes.push(pedersen([2, pedersen([nodes[0], nodes[1]])]));
-    nodes.push(pedersen([3, 2]));
+    nodes.push(pedersen([2, 2]));
+    nodes.push(pedersen([3, pedersen([nodes[0], nodes[1]])]));
+    nodes.push(pedersen([4, 3]));
 
     for(let i=0; i < nodes.length; i++) {
-      assert.equal(mmr.hashes[i], nodes[i]);
+      assert.equal(mmr.hashes[i], nodes[i-1]);
     }
   });
 
@@ -101,16 +101,16 @@ describe('Node content (hashes)', function() {
     }
 
     const nodes = [];
-    nodes.push(pedersen([0, 0]));
     nodes.push(pedersen([1, 1]));
-    nodes.push(pedersen([2, pedersen([nodes[0], nodes[1]])]));
-    nodes.push(pedersen([3, 2]));
+    nodes.push(pedersen([2, 2]));
+    nodes.push(pedersen([3, pedersen([nodes[0], nodes[1]])]));
     nodes.push(pedersen([4, 3]));
-    nodes.push(pedersen([5, pedersen([nodes[3], nodes[4]])]));
-    nodes.push(pedersen([6, pedersen([nodes[2], nodes[5]])]));
+    nodes.push(pedersen([5, 4]));
+    nodes.push(pedersen([6, pedersen([nodes[3], nodes[4]])]));
+    nodes.push(pedersen([7, pedersen([nodes[2], nodes[5]])]));
 
     for(let i=0; i < nodes.length; i++) {
-      assert.equal(mmr.hashes[i], nodes[i]);
+      assert.equal(mmr.hashes[i], nodes[i-1]);
     }
   });
 
@@ -122,17 +122,17 @@ describe('Node content (hashes)', function() {
     }
 
     const nodes = [];
-    nodes.push(pedersen([0, 0]));
     nodes.push(pedersen([1, 1]));
-    nodes.push(pedersen([2, pedersen([nodes[0], nodes[1]])]));
-    nodes.push(pedersen([3, 2]));
+    nodes.push(pedersen([2, 2]));
+    nodes.push(pedersen([3, pedersen([nodes[0], nodes[1]])]));
     nodes.push(pedersen([4, 3]));
-    nodes.push(pedersen([5, pedersen([nodes[3], nodes[4]])]));
-    nodes.push(pedersen([6, pedersen([nodes[2], nodes[5]])]));
-    nodes.push(pedersen([7, 4]));
+    nodes.push(pedersen([5, 4]));
+    nodes.push(pedersen([6, pedersen([nodes[3], nodes[4]])]));
+    nodes.push(pedersen([7, pedersen([nodes[2], nodes[5]])]));
+    nodes.push(pedersen([8, 5]));
 
     for(let i=0; i < nodes.length; i++) {
-      assert.equal(mmr.hashes[i], nodes[i]);
+      assert.equal(mmr.hashes[i], nodes[i-1]);
     }
   });
 });

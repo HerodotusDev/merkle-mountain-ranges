@@ -26,8 +26,8 @@ export class MMR {
     while (getHeight(this.lastPos + 1) > height) {
       this.lastPos++;
 
-      let left = this.lastPos - parentOffset(height - 1);
-      let right = left + siblingOffset(height - 1);
+      let left = this.lastPos - parentOffset(height);
+      let right = left + siblingOffset(height);
 
       let parentHash = pedersen([
         this.lastPos,
