@@ -1,48 +1,43 @@
-import assert from "assert";
-import { pedersen } from "starknet/dist/utils/hash";
-import { NoStorageMMR } from "..";
+import assert from 'assert';
+import { pedersen } from 'starknet/dist/utils/hash';
+import { NoStorageMMR } from '..';
 
-describe.only('Bag the peaks', function() {
-  let mmr: NoStorageMMR;
+describe('Bag the peaks', function () {
+    let mmr: NoStorageMMR;
 
-  before(function() {
-    mmr = new NoStorageMMR();
-  });
+    before(function () {
+        mmr = new NoStorageMMR();
+    });
 
-  it('empty peaks', function() {
-    assert.equal(mmr.bagPeaks([]), '');
-  });
+    it('empty peaks', function () {
+        assert.equal(mmr.bagPeaks([]), '');
+    });
 
-  it('1 peak', function() {
-    const peaks = [
-      pedersen([0, 0])
-    ]
+    it('1 peak', function () {
+        const peaks = [pedersen([0, 0])];
 
-    const res = peaks[0];
+        const res = peaks[0];
 
-    assert.equal(mmr.bagPeaks(peaks), res);
-  });
-  
-  it('2 peaks', function() {
-    const peaks = [
-      pedersen([0, 23498]),
-      pedersen([1, 24089])
-    ]
+        assert.equal(mmr.bagPeaks(peaks), res);
+    });
 
-    const res = pedersen([peaks[0], peaks[1]]);
+    it('2 peaks', function () {
+        const peaks = [pedersen([0, 23498]), pedersen([1, 24089])];
 
-    assert.equal(mmr.bagPeaks(peaks), res);
-  });
+        const res = pedersen([peaks[0], peaks[1]]);
 
-  it('3 peaks', function() {
-    const peaks = [
-      pedersen([0, 23498]),
-      pedersen([1, 24089]),
-      pedersen([7, 9384598])
-    ]
+        assert.equal(mmr.bagPeaks(peaks), res);
+    });
 
-    const res = pedersen([peaks[0] ,pedersen([peaks[1], peaks[2]])]);
+    it('3 peaks', function () {
+        const peaks = [
+            pedersen([0, 23498]),
+            pedersen([1, 24089]),
+            pedersen([7, 9384598]),
+        ];
 
-    assert.equal(mmr.bagPeaks(peaks), res);
-  });
-})
+        const res = pedersen([peaks[0], pedersen([peaks[1], peaks[2]])]);
+
+        assert.equal(mmr.bagPeaks(peaks), res);
+    });
+});
