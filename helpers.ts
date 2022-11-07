@@ -30,14 +30,41 @@ export const findPeaks = (num: number): number[] => {
     return peaks;
 };
 
+// Returns true if a specified index `num` is also the index of a peak inside `peaks`.
+export const isPeak = (num: number, peaks: number[]): boolean =>
+    peaks.indexOf(num) !== -1;
+
 // Returns the number of bits in num
-export function bitLength(num: number) {
+export function bitLength(num: number): number {
     return num.toString(2).length;
 }
 
 // Number with all bits 1 with the same length as num
 export function allOnes(num: number) {
     return (1 << bitLength(num)) - 1 == num;
+}
+
+export function leadingZeros(num: number) {
+    return num === 0 ? 64 : 64 - bitLength(num);
+}
+
+export function peakMapHeight(size: number) {
+    if (size === 0) {
+        return [0, 0];
+    }
+    let peak_size =
+        // uint64 size
+        BigInt('18446744073709551615') >> BigInt(leadingZeros(size));
+    let peak_map = 0;
+    while (peak_size != BigInt(0)) {
+        peak_map <<= 1;
+        if (size >= peak_size) {
+            size -= Number(peak_size);
+            peak_map |= 1;
+        }
+        peak_size >>= BigInt(1);
+    }
+    return [peak_map, size];
 }
 
 // Assuming the first position starts with index 1
