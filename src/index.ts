@@ -1,3 +1,4 @@
+import { pedersen } from 'starknet/dist/utils/hash';
 import {
     findPeaks,
     getHeight,
@@ -5,20 +6,22 @@ import {
     parentOffset,
     peakMapHeight,
     siblingOffset,
-} from './helpers';
-
-import { pedersen } from 'starknet/dist/utils/hash';
-import { Hashes, Leaves, MMRProof } from './test/types';
+} from './lib/helpers';
+import { Hashes, Leaves, MMRProof } from './lib/types';
 
 export class MMR {
     hashes: Hashes;
     values: Leaves;
-    lastPos: number;
+    rootHash: string;
+    lastPos: number; // Tree size (total number of nodes, including leaves)
+    leaves: number;
 
     constructor() {
         this.hashes = {} as Hashes;
         this.values = {} as Leaves;
         this.lastPos = 0;
+        this.rootHash = '';
+        this.leaves = 0;
     }
 
     append(value: string) {
@@ -40,7 +43,7 @@ export class MMR {
             let left = this.lastPos - parentOffset(height);
             let right = left + siblingOffset(height);
 
-            let parentHash = pedersen([
+            const parentHash = pedersen([
                 this.lastPos,
                 pedersen([this.hashes[left], this.hashes[right]]),
             ]);
@@ -49,17 +52,33 @@ export class MMR {
             height++;
         }
 
+        // Compute the new root hash
+        this.rootHash = this.bagThePeaks();
+
+        ++this.leaves;
         return pos;
     }
 
+    bagThePeaks(peaks = findPeaks(this.lastPos)): string {
+        if (!peaks.length) throw new Error('Expected peaks to bag');
+
+        let bags = this.hashes[peaks[peaks.length - 1]];
+        for (let idx = peaks.length - 1; idx >= 0; --idx) {
+            bags = pedersen([bags, this.hashes[peaks[idx]]]);
+        }
+        const treeSize = this.lastPos;
+        const rootHash = pedersen([treeSize, bags]);
+        return rootHash;
+    }
+
     isLeaf(idx: number) {
-        return getHeight(idx) == 0;
+        return getHeight(idx) === 0;
     }
 
     isLeftSibling(idx: number): boolean {
         const [peak_map, height] = peakMapHeight(idx - 1);
         const peak = 1 << height;
-        return (peak_map & peak) == 0;
+        return (peak_map & peak) === 0;
     }
 
     getProof(idx: number): MMRProof {
@@ -94,17 +113,6 @@ export class MMR {
             if (!parentHash)
                 throw new Error(`Expected a hash value for parent ${idx}`);
 
-            if (
-                pedersen([
-                    parentIdx,
-                    pedersen(
-                        isLeft ? [hash, siblingHash] : [siblingHash, hash]
-                    ),
-                ]) !== parentHash
-            ) {
-                throw new Error('Parent hash mismatch');
-            }
-
             idx = parentIdx; // Jump to parent
         }
         return {
@@ -116,62 +124,43 @@ export class MMR {
             lastVisitedNodeIdx: idx,
         };
     }
-}
 
-export class NoStorageMMR {
-    lastPos: number;
-    root: string;
-
-    constructor() {
-        this.lastPos = 0;
-        this.root = '';
-    }
-
-    bagPeaks(peaks: string[]) {
-        if (peaks.length == 0) {
-            return '';
+    verifyProof(proof: MMRProof) {
+        let hash = pedersen([proof.index, proof.value]);
+        const storedHash = this.hashes[proof.index];
+        if (hash !== storedHash) {
+            throw new Error('Hash mismatch');
         }
-
-        let res = peaks[peaks.length - 1];
-
-        for (let i = peaks.length - 2; i >= 0; i--) {
-            res = pedersen([peaks[i], res]);
-        }
-
-        return res;
-    }
-
-    append(elem: number, peaks: string[]) {
-        // Increment position
-        this.lastPos++;
-
-        // Check peaks
-        if (this.bagPeaks(peaks) != this.root) {
-            return -1;
-        }
-
-        let hash = pedersen([this.lastPos, elem]);
-        peaks.push(hash);
-
-        let height = 0;
-
-        // If the height of the next node is higher then the height of current node
-        // It means that the next node is a parent of current, thus merging happens
-        while (getHeight(this.lastPos + 1) > height) {
-            this.lastPos++;
-
-            const rightHash = peaks.pop();
-            const leftHash = peaks.pop();
-
-            let parentHash = pedersen([
-                this.lastPos,
-                pedersen([leftHash, rightHash]),
+        let height;
+        let siblingN = 0;
+        let idx = proof.index;
+        while (!isPeak(idx, proof.peaks)) {
+            height = getHeight(idx);
+            const isLeft = this.isLeftSibling(idx);
+            const siblingHash = proof.siblingHashes[siblingN];
+            if (!siblingHash) throw new Error('Expected sibling hash');
+            const siblingOfs = siblingOffset(height);
+            const siblingIdx = isLeft ? idx + siblingOfs : idx - siblingOfs;
+            const storedSiblingHash = this.hashes[siblingIdx];
+            if (siblingHash !== storedSiblingHash) {
+                throw new Error('Sibling mismatch');
+            }
+            const parentOfs = parentOffset(height);
+            const parentIdx = isLeft ? idx + parentOfs : siblingIdx + parentOfs;
+            const parentHash = pedersen([
+                parentIdx,
+                pedersen(isLeft ? [hash, siblingHash] : [siblingHash, hash]),
             ]);
-            peaks.push(parentHash);
-
-            height++;
+            const storedParentHash = this.hashes[parentIdx];
+            if (parentHash !== storedParentHash) {
+                throw new Error('Parent mismatch');
+            }
+            idx = parentIdx; // Jump to parent
+            hash = parentHash;
+            siblingN += 1;
         }
-
-        this.root = this.bagPeaks(peaks);
+        if (this.bagThePeaks(proof.peaks) !== this.rootHash) {
+            throw new Error('Top hash is not equal to this MMR root hash');
+        }
     }
 }

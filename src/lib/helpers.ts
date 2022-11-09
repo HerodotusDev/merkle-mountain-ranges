@@ -1,3 +1,4 @@
+// Find the peaks (if any) of a tree of size `num`.
 export const findPeaks = (num: number): number[] => {
     if (num === 0) return [];
 
@@ -44,10 +45,13 @@ export function allOnes(num: number) {
     return (1 << bitLength(num)) - 1 == num;
 }
 
+// Returns the number of leading zeros of a uint64.
 export function leadingZeros(num: number) {
     return num === 0 ? 64 : 64 - bitLength(num);
 }
 
+// Get the peak map height.
+// @notice this fn has a uint64 size limit
 export function peakMapHeight(size: number) {
     if (size === 0) {
         return [0, 0];
@@ -81,19 +85,23 @@ export const getHeight = (num: number): number => {
     return bitLength(h) - 1;
 };
 
+// Get the offset to the next sibling from `height`
 export const siblingOffset = (height: number): number => {
     return (2 << height) - 1;
 };
 
+// Get the offset to the next parent from `height`
 export const parentOffset = (height: number): number => {
     return 2 << height;
 };
 
+// Jump to the next right sibling from `num`
 const bintreeJumpRightSibling = (num: number) => {
     const height = getHeight(num);
     return num + (1 << (height + 1)) - 1;
 };
 
+// Jump down left from `num`
 const bintreeMoveDownLeft = (num: number) => {
     const height = getHeight(num);
     if (height === 0) {

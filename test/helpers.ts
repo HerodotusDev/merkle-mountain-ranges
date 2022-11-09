@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { findPeaks, getHeight } from '../helpers';
+import { findPeaks, getHeight } from '../src/lib/helpers';
 import { heights } from './samples/heights.json';
 import { peaks } from './samples/peaks.json';
 

@@ -1,8 +1,8 @@
 import assert from 'assert';
 import { pedersen } from 'starknet/dist/utils/hash';
-import { MMR } from '..';
+import { MMR } from '../src';
 
-describe('Append', function () {
+describe('Append elements to the tree', function () {
     let mmr: MMR;
 
     before(function () {
@@ -56,6 +56,7 @@ describe('Node content (hashes)', function () {
         const elem = 1;
         mmr.append(elem.toString());
         assert.equal(mmr.hashes[1], pedersen([1, elem]));
+        assert.equal(1, mmr.leaves);
     });
 
     it('2 leaves', function () {
@@ -73,6 +74,7 @@ describe('Node content (hashes)', function () {
         for (let i = 1; i <= nodes.length; i++) {
             assert.equal(mmr.hashes[i], nodes[i - 1]);
         }
+        assert.equal(elems, mmr.leaves);
     });
 
     it('3 leaves', function () {
@@ -91,6 +93,7 @@ describe('Node content (hashes)', function () {
         for (let i = 1; i <= nodes.length; i++) {
             assert.equal(mmr.hashes[i], nodes[i - 1]);
         }
+        assert.equal(elems, mmr.leaves);
     });
 
     it('4 leaves', function () {
@@ -112,6 +115,7 @@ describe('Node content (hashes)', function () {
         for (let i = 1; i <= nodes.length; i++) {
             assert.equal(mmr.hashes[i], nodes[i - 1]);
         }
+        assert.equal(elems, mmr.leaves);
     });
 
     it('5 leaves', function () {
@@ -134,5 +138,6 @@ describe('Node content (hashes)', function () {
         for (let i = 1; i <= nodes.length; i++) {
             assert.equal(mmr.hashes[i], nodes[i - 1]);
         }
+        assert.equal(elems, mmr.leaves);
     });
 });
