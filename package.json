@@ -2,7 +2,7 @@
     "name": "merkle-mountain-ranges",
     "description": "A TypeScript example implementation of Merkle Mountain Ranges",
     "author": "Herodotus Dev Ltd",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "main": "dist/src/index.js",
     "scripts": {
         "build": "npx tsc",

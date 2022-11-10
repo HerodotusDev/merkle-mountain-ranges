@@ -2,6 +2,8 @@
 
 An implementation of Merkle Mountain Ranges in TypeScript, using the Pedersen hashing function.
 
+If you would like to know why a Merkle Mountain Range data structure could be potentialy beneficial to you, read our [article](https://codyx.medium.com/over-the-proofs-a-world-of-trees-merkle-mountain-ranges-edition-️-dd4ac0e540fc) and [Twitter thread](https://twitter.com/0xtiagofneto/status/1590025666551902209).
+
 This can be used in pair with an on-chain contract to prove the integrity of the tree.
 
 An example of such contract can be found [here](https://github.com/HerodotusDev/cairo-mmr)(Starknet/Cairo).
@@ -11,7 +13,7 @@ An example of such contract can be found [here](https://github.com/HerodotusDev/
 ### Installing the package
 
 ```sh
-$> yarn install merkle-mountain-ranges
+$> yarn add merkle-mountain-ranges
 ```
 
 ### Usage example
@@ -38,7 +40,7 @@ function main() {
           / \   / \    / \   /  \   /  \
       0  1   2 4   5  8   9 11  12 16  17 19
       */
-    console.log('Leaves number', mmr.leaves); // 11
+    console.log('Number of leaves', mmr.leaves); // 11
 
     // Generating a proof for leaf no.9 (16th node in the inclusion diagram above)
     const proof = mmr.getProof(9);
