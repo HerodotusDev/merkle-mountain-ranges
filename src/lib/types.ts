@@ -1,3 +1,5 @@
+import { RedisClientOptions } from 'redis';
+
 export type MMRProof = {
     // Proving slot index
     index: number;
@@ -20,3 +22,8 @@ export interface Hashes {
 export interface Leaves {
     [leaf: number]: string;
 }
+
+export type MMRConfig = {
+    withRootHash: boolean;
+    redisClientOptions?: RedisClientOptions;
+};

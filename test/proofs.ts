@@ -1,15 +1,17 @@
 import assert from 'assert';
-import { MMR } from '../src';
 import { MMRProof } from '../src/lib/types';
+import { RedisMMR as MMR } from '../src';
 
 describe('Merkle proofs generations and verifications', () => {
     let mmr: MMR;
 
-    before(() => {
+    before(async () => {
         mmr = new MMR();
+        await mmr.init();
+
         const leaves = 11;
         for (let i = 1; i <= leaves; i++) {
-            mmr.append(i.toString());
+            await mmr.append(i.toString());
         }
         /*
  Height
@@ -26,65 +28,67 @@ describe('Merkle proofs generations and verifications', () => {
     */
     });
 
-    it('should generate valid proofs', () => {
+    it('should generate valid proofs', async () => {
         let proof: MMRProof;
 
         // First peak
-        proof = mmr.getProof(1);
+        proof = await mmr.getProof(1);
         assert.equal(proof.lastVisitedNodeIdx, 15);
         assert.equal(proof.siblingHashes.length, 3);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
-        proof = mmr.getProof(2);
+        proof = await mmr.getProof(2);
         assert.equal(proof.lastVisitedNodeIdx, 15);
         assert.equal(proof.siblingHashes.length, 3);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
-        proof = mmr.getProof(4);
+        proof = await mmr.getProof(4);
         assert.equal(proof.lastVisitedNodeIdx, 15);
         assert.equal(proof.siblingHashes.length, 3);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
-        proof = mmr.getProof(5);
+        proof = await mmr.getProof(5);
         assert.equal(proof.lastVisitedNodeIdx, 15);
         assert.equal(proof.siblingHashes.length, 3);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
-        proof = mmr.getProof(8);
+        proof = await mmr.getProof(8);
         assert.equal(proof.lastVisitedNodeIdx, 15);
         assert.equal(proof.siblingHashes.length, 3);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
-        proof = mmr.getProof(9);
+        proof = await mmr.getProof(9);
         assert.equal(proof.lastVisitedNodeIdx, 15);
         assert.equal(proof.siblingHashes.length, 3);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
-        proof = mmr.getProof(11);
+        proof = await mmr.getProof(11);
         assert.equal(proof.lastVisitedNodeIdx, 15);
         assert.equal(proof.siblingHashes.length, 3);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
-        proof = mmr.getProof(12);
+        proof = await mmr.getProof(12);
         assert.equal(proof.lastVisitedNodeIdx, 15);
         assert.equal(proof.siblingHashes.length, 3);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
         // Second peak
-        proof = mmr.getProof(16);
+        proof = await mmr.getProof(16);
         assert.equal(proof.lastVisitedNodeIdx, 18);
         assert.equal(proof.siblingHashes.length, 1);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
-        proof = mmr.getProof(17);
+        proof = await mmr.getProof(17);
         assert.equal(proof.lastVisitedNodeIdx, 18);
         assert.equal(proof.siblingHashes.length, 1);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
 
         // Third peak (which is also a leaf)
-        proof = mmr.getProof(19);
+        proof = await mmr.getProof(19);
         assert.equal(proof.lastVisitedNodeIdx, 19);
         assert.equal(proof.siblingHashes.length, 0);
-        mmr.verifyProof(proof);
+        await mmr.verifyProof(proof);
     });
+
+    after(async () => mmr.disconnectRedisClient());
 });

@@ -1,4 +1,6 @@
+import { createClient, RedisClientType } from 'redis';
 import { pedersen } from 'starknet/dist/utils/hash';
+import { v4 as uuidv4 } from 'uuid';
 import {
     findPeaks,
     getHeight,
@@ -7,66 +9,132 @@ import {
     peakMapHeight,
     siblingOffset,
 } from './lib/helpers';
-import { Hashes, Leaves, MMRProof } from './lib/types';
+import { MMRConfig, MMRProof } from './lib/types';
 
-export class MMR {
-    hashes: Hashes;
-    values: Leaves;
-    rootHash: string;
-    lastPos: number; // Tree size (total number of nodes, including leaves)
-    leaves: number;
+export class RedisMMR {
+    client: RedisClientType;
+    uuid: string;
+    withRootHash: boolean; // Will bag the peaks if set to true.
 
-    constructor() {
-        this.hashes = {} as Hashes;
-        this.values = {} as Leaves;
-        this.lastPos = 0;
-        this.rootHash = '';
-        this.leaves = 0;
+    constructor(mmrConfig: MMRConfig = { withRootHash: false }) {
+        // @ts-ignore
+        this.client = createClient(mmrConfig.redisClientOptions ?? undefined);
+
+        this.uuid = uuidv4(); // Unique MMR id, prefixing all related Redis keys.
+        this.withRootHash = mmrConfig.withRootHash;
     }
 
-    append(value: string) {
-        // Increment position
-        this.lastPos++;
+    async init() {
+        await this.client.connect();
 
-        const hash = pedersen([this.lastPos, value]);
-        this.hashes[this.lastPos] = hash;
-        this.values[this.lastPos] = value;
+        // Initialize new MMR tree properties.
+        await this.redisZeroSet('lastPos');
+        await this.redisZeroSet('leaves');
+        await this.redisSet('rootHash', '');
+        await this.redisDel('hashes'); // Remove collision (shouldn't happen, extra check)
+        await this.redisDel('values'); // Remove collision (shouldn't happen, extra check)
+    }
+
+    async redisSet(key: string, value: any) {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+        return this.client.set(`${this.uuid}.${key}`, value);
+    }
+
+    async redisGet(key: string) {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+        return this.client.get(`${this.uuid}.${key}`);
+    }
+
+    async redisHSet(key: string, field: string | number, value: any) {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+        await this.client.hSet(`${this.uuid}.${key}`, field, value);
+        return value;
+    }
+
+    async redisHGet(key: string, field: string) {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+        return this.client.hGet(`${this.uuid}.${key}`, field);
+    }
+
+    async redisIncr(key: string) {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+        return this.client.incr(`${this.uuid}.${key}`);
+    }
+
+    async redisDel(key: string) {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+        return this.client.del(`${this.uuid}.${key}`);
+    }
+
+    async redisZeroSet(key: string) {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+        return this.client.set(`${this.uuid}.${key}`, 0);
+    }
+
+    disconnectRedisClient() {
+        if (this.client.isOpen) return this.client.disconnect();
+    }
+
+    async append(value: string): Promise<number> {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+
+        // Increment position
+        let lastPos = await this.redisIncr('lastPos');
+
+        const hash = pedersen([lastPos, value]);
+        await this.redisHSet('hashes', lastPos.toString(), hash);
+        await this.redisHSet('values', lastPos.toString(), value);
 
         let height = 0;
-        let pos = this.lastPos;
 
         // If the height of the next node is higher then the height of current node
         // It means that the next node is a parent of current, thus merging happens
-        while (getHeight(this.lastPos + 1) > height) {
-            this.lastPos++;
+        while (getHeight(lastPos + 1) > height) {
+            ++lastPos;
 
-            let left = this.lastPos - parentOffset(height);
-            let right = left + siblingOffset(height);
+            const left = lastPos - parentOffset(height);
+            const right = left + siblingOffset(height);
+
+            const leftHash = await this.redisHGet('hashes', left.toString());
+            const rightHash = await this.redisHGet('hashes', right.toString());
 
             const parentHash = pedersen([
-                this.lastPos,
-                pedersen([this.hashes[left], this.hashes[right]]),
+                lastPos,
+                pedersen([leftHash, rightHash]),
             ]);
-            this.hashes[this.lastPos] = parentHash;
+            await this.redisHSet('hashes', lastPos.toString(), parentHash);
 
             height++;
         }
+        // Update lastest value.
+        await this.redisSet('lastPos', lastPos);
 
         // Compute the new root hash
-        this.rootHash = this.bagThePeaks();
+        if (this.withRootHash)
+            await this.redisSet('rootHash', await this.bagThePeaks());
 
-        ++this.leaves;
-        return pos;
+        const leaves = await this.redisIncr('leaves');
+        // Returns the new total number of leaves.
+        return leaves;
     }
 
-    bagThePeaks(peaks = findPeaks(this.lastPos)): string {
-        if (!peaks.length) throw new Error('Expected peaks to bag');
-
-        let bags = this.hashes[peaks[peaks.length - 1]];
-        for (let idx = peaks.length - 1; idx >= 0; --idx) {
-            bags = pedersen([bags, this.hashes[peaks[idx]]]);
+    async bagThePeaks(peaks?: number[]): Promise<string> {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+        const lastPos = Number(await this.redisGet('lastPos'));
+        if (!peaks) {
+            peaks = findPeaks(lastPos);
         }
-        const treeSize = this.lastPos;
+
+        let bags = await this.redisHGet(
+            'hashes',
+            peaks[peaks.length - 1].toString()
+        );
+
+        for (let idx = peaks.length - 1; idx >= 0; --idx) {
+            const peak = await this.redisHGet('hashes', peaks[idx].toString());
+            bags = pedersen([bags, peak]);
+        }
+        const treeSize = lastPos;
         const rootHash = pedersen([treeSize, bags]);
         return rootHash;
     }
@@ -81,35 +149,48 @@ export class MMR {
         return (peak_map & peak) === 0;
     }
 
-    getProof(idx: number): MMRProof {
+    async getProof(idx: number): Promise<MMRProof> {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
+
         if (idx <= 0) throw new Error('Index starts at one');
-        if (idx > this.lastPos) throw new Error('Index out of range');
+        const lastPos = Number(await this.redisGet('lastPos'));
+        if (idx > lastPos) throw new Error('Index out of range');
         if (!this.isLeaf(idx)) throw new Error('Expected a leaf node');
 
         const index = idx;
-        const value = this.values[idx];
+        const value = await this.redisHGet('values', idx.toString());
         if (!value) throw new Error(`Expected value for index ${idx}`);
 
-        const peaks = findPeaks(this.lastPos);
-        const peaksHashes = peaks.map((p) => this.hashes[p]);
+        const peaks = findPeaks(lastPos);
+        const peaksHashesPromises = peaks.map(
+            // @ts-ignore
+            (p): Promise<string> => this.redisHGet('hashes', p.toString())
+        );
+        const peaksHashes = await Promise.all(peaksHashesPromises);
         let height;
         const siblingHashes = []; // Proof
         while (!isPeak(idx, peaks)) {
             height = getHeight(idx);
-            const hash = this.hashes[idx];
+            const hash = await this.redisHGet('hashes', idx.toString());
             if (!hash) throw new Error(`Expected a hash value for node ${idx}`);
 
             const isLeft = this.isLeftSibling(idx);
             const siblingOfs = siblingOffset(height);
             const siblingIdx = isLeft ? idx + siblingOfs : idx - siblingOfs;
-            const siblingHash = this.hashes[siblingIdx];
+            const siblingHash = await this.redisHGet(
+                'hashes',
+                siblingIdx.toString()
+            );
             if (!siblingHash)
                 throw new Error(`Expected a hash value for sibling ${idx}`);
             siblingHashes.push(siblingHash);
 
             const parentOfs = parentOffset(height);
             const parentIdx = isLeft ? idx + parentOfs : siblingIdx + parentOfs;
-            const parentHash = this.hashes[parentIdx];
+            const parentHash = await this.redisHGet(
+                'hashes',
+                parentIdx.toString()
+            );
             if (!parentHash)
                 throw new Error(`Expected a hash value for parent ${idx}`);
 
@@ -125,9 +206,13 @@ export class MMR {
         };
     }
 
-    verifyProof(proof: MMRProof) {
+    async verifyProof(proof: MMRProof) {
+        if (!this.client.isReady) throw new Error('Redis client not ready');
         let hash = pedersen([proof.index, proof.value]);
-        const storedHash = this.hashes[proof.index];
+        const storedHash = await this.redisHGet(
+            'hashes',
+            proof.index.toString()
+        );
         if (hash !== storedHash) {
             throw new Error('Hash mismatch');
         }
@@ -141,7 +226,10 @@ export class MMR {
             if (!siblingHash) throw new Error('Expected sibling hash');
             const siblingOfs = siblingOffset(height);
             const siblingIdx = isLeft ? idx + siblingOfs : idx - siblingOfs;
-            const storedSiblingHash = this.hashes[siblingIdx];
+            const storedSiblingHash = await this.redisHGet(
+                'hashes',
+                siblingIdx.toString()
+            );
             if (siblingHash !== storedSiblingHash) {
                 throw new Error('Sibling mismatch');
             }
@@ -151,7 +239,10 @@ export class MMR {
                 parentIdx,
                 pedersen(isLeft ? [hash, siblingHash] : [siblingHash, hash]),
             ]);
-            const storedParentHash = this.hashes[parentIdx];
+            const storedParentHash = await this.redisHGet(
+                'hashes',
+                parentIdx.toString()
+            );
             if (parentHash !== storedParentHash) {
                 throw new Error('Parent mismatch');
             }
@@ -159,8 +250,11 @@ export class MMR {
             hash = parentHash;
             siblingN += 1;
         }
-        if (this.bagThePeaks(proof.peaks) !== this.rootHash) {
-            throw new Error('Top hash is not equal to this MMR root hash');
+        if (this.withRootHash) {
+            const storedRootHash = await this.redisGet('rootHash');
+            if ((await this.bagThePeaks(proof.peaks)) !== storedRootHash) {
+                throw new Error('Top hash is not equal to this MMR root hash');
+            }
         }
     }
 }
