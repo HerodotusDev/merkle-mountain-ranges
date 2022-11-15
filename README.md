@@ -59,7 +59,7 @@ async function main() {
 
     console.log('Valid proof!');
 
-    await mmr.disconnectRedisClient(); // Disconnect the `node-redis` instance.
+    await mmr.disconnectDb(); // Disconnect the `node-redis` instance.
 }
 
 main().catch(console.error);
