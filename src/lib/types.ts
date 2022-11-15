@@ -1,5 +1,3 @@
-import { RedisClientOptions } from 'redis';
-
 export type MMRProof = {
     // Proving slot index
     index: number;
@@ -23,7 +21,9 @@ export interface Leaves {
     [leaf: number]: string;
 }
 
-export type MMRConfig = {
+export type MMRRocksDBConfig = {
     withRootHash: boolean;
-    redisClientOptions?: RedisClientOptions;
+    location: string; // Database directory location (on disk).
+    dbInstance?: any; // RocksDB instance;
+    treeUuid?: string; // Will restore an existing tree from db.
 };

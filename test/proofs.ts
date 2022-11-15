@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { MMRProof } from '../src/lib/types';
-import { RedisMMR as MMR } from '../src';
+import { RocksDBMMR as MMR } from '../src';
 
 describe('Merkle proofs generations and verifications', () => {
     let mmr: MMR;
@@ -90,5 +90,5 @@ describe('Merkle proofs generations and verifications', () => {
         await mmr.verifyProof(proof);
     });
 
-    after(async () => mmr.disconnectRedisClient());
+    after(async () => mmr.disconnectDb());
 });
