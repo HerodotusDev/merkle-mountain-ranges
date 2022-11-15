@@ -111,7 +111,7 @@ import { RocksDBMMR } from 'merkle-mountain-ranges';
 const mmrConfig = {
     // If set to true, the MMR will use a root hash.
     withRootHash: true, // Default to false.
-    location: './rocksdb', // Db location path (will be created if it's non-existing).
+    location: './rocksdb-db', // Db location path (will be created if it's non-existing).
     // treeUuid?: string; (Optional, tree UUID, to restore an existing tree).
     // dbInstance?: RocksDBType; (Optional, if the Node process needs to instantiate a MMR sharing another db instance).
 };
