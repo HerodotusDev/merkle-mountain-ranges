@@ -2,12 +2,11 @@
     "name": "merkle-mountain-ranges",
     "description": "A TypeScript example implementation of Merkle Mountain Ranges",
     "author": "Herodotus Dev Ltd",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "main": "dist/src/index.js",
     "scripts": {
         "build": "npx tsc",
-        "test": "npx ts-mocha test/**/*.ts --timeout 200000",
-        "postinstall": "npx tsc"
+        "test": "npx ts-mocha test/**/*.ts --timeout 200000"
     },
     "keywords": [
         "merkle mountain range",
@@ -27,6 +26,7 @@
     },
     "dependencies": {
         "@types/uuid": "^8.3.4",
+        "level-rocksdb": "^5.0.0",
         "redis": "^4.5.0",
         "starknet": "^4.9.0",
         "uuid": "^9.0.0"

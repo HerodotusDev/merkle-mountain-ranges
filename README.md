@@ -1,10 +1,12 @@
 # Merkle Mountain Ranges
 
-An implementation of Merkle Mountain Ranges in TypeScript, using the Pedersen hashing function.
+An implementation of Merkle Mountain Ranges in TypeScript using the Pedersen hashing function.
+
+Note: for optimization reasons, the Pedersen hashing function used here is derived from Rust via WASM, thanks to the work of [Geometry](https://github.com/geometryresearch/starknet-signatures/blob/722c5987cb96aee80f230a97fed685194c97b7db/packages/prover/src/pedersen.rs).
 
 If you would like to know why a Merkle Mountain Range data structure could be potentially beneficial to you, read our [article](https://codyx.medium.com/over-the-proofs-a-world-of-trees-merkle-mountain-ranges-edition-️-dd4ac0e540fc) and [Twitter thread](https://twitter.com/0xtiagofneto/status/1590025666551902209).
 
-This can be used in pair with an on-chain contract to prove the integrity of the tree.
+This can be used in-pair with an on-chain contract to prove a tree's integrity.
 
 An example of such contract can be found [here](https://github.com/HerodotusDev/cairo-mmr)(Starknet/Cairo).
 
@@ -12,6 +14,21 @@ An example of such contract can be found [here](https://github.com/HerodotusDev/
 
 ```sh
 $> yarn add merkle-mountain-ranges
+```
+
+### RAM (in-memory) example
+
+```typescript
+import { MMR } from 'merkle-mountain-ranges';
+
+async function main() {
+    const mmr = new RocksDBMMR(mmrConfig);
+
+    mmmr.append('1');
+    const proof = mmr.getProof(1);
+    mmr.verifyProof(proof);
+    // ...
+}
 ```
 
 ### Redis usage example
@@ -23,6 +40,8 @@ const mmrConfig = {
     // If set to true, the MMR will use a root hash.
     withRootHash: true, // Default to false.
     // redisClientOptions (Optional, type from `node-redis`). Without, default to localhost on port 6379.
+    // treeUuid?: string; (Optional, tree UUID, to restore an existing tree).
+    // dbInstance?: RedisClientType; (Optional, if the Node process needs to instantiate a MMR sharing another db instance).
 };
 
 async function main() {
@@ -84,9 +103,42 @@ main().catch(console.error);
 // Valid proof!
 ```
 
+### RocksDB usage example
+
+```typescript
+import { RocksDBMMR } from 'merkle-mountain-ranges';
+
+const mmrConfig = {
+    // If set to true, the MMR will use a root hash.
+    withRootHash: true, // Default to false.
+    location: './rocksdb', // Db location path (will be created if it's non-existing).
+    // treeUuid?: string; (Optional, tree UUID, to restore an existing tree).
+    // dbInstance?: RocksDBType; (Optional, if the Node process needs to instantiate a MMR sharing another db instance).
+};
+
+async function main() {
+    const mmr = new RocksDBMMR(mmrConfig);
+
+    await mmr.init(); // Initialize the connection
+
+    // ...
+}
+```
+
 ### Running tests
 
-```sh
+```bash
+
+# In-memory test
+$> npx ts-mocha test/ram/*.ts
+
+# Redis test
+$> npx ts-mocha test/redis/*.ts
+
+# RocksDB test
+$> npx ts-mocha test/rocksdb/*.ts
+
+# All
 $> yarn test
 ```
 

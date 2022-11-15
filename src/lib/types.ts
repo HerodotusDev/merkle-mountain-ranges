@@ -29,3 +29,10 @@ export type RedisMMRConfig = {
     treeUuid?: string;
     dbInstance?: RedisClientType;
 };
+
+export type MMRRocksDBConfig = {
+    withRootHash: boolean;
+    location: string; // Database directory location (on disk).
+    dbInstance?: any; // RocksDB instance;
+    treeUuid?: string; // Will restore an existing tree from db.
+};
