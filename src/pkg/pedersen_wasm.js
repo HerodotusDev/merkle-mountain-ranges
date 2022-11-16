@@ -84,6 +84,8 @@ function getInt32Memory0() {
     return cachedInt32Memory0;
 }
 /**
+* Computes the Starkware version of the Pedersen hash of x and y. All inputs are little-endian.
+* Returns its 0x-prefixed lowercase hex representation. Output is big-endian.
 * @param {string} x
 * @param {string} y
 * @returns {string}
@@ -112,18 +114,46 @@ function passArray8ToWasm0(arg, malloc) {
     return ptr;
 }
 /**
+* Computes the Starkware version of the Pedersen hash of x and y. All inputs are little-endian.
+* Returns its 0x-prefixed lowercase hex representation. Output is big-endian.
+* https://github.com/xJonathanLEI/starknet-rs/blob/89a724f00ba6000120b17f68f6da0b4c982eea2f/starknet-crypto/src/pedersen_hash.rs#L19
 * @param {Uint8Array} x
 * @param {Uint8Array} y
 * @returns {string}
 */
-module.exports.og_pedersen = function(x, y) {
+module.exports.starknet_pedersen = function(x, y) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passArray8ToWasm0(x, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ptr1 = passArray8ToWasm0(y, wasm.__wbindgen_malloc);
         const len1 = WASM_VECTOR_LEN;
-        wasm.og_pedersen(retptr, ptr0, len0, ptr1, len1);
+        wasm.starknet_pedersen(retptr, ptr0, len0, ptr1, len1);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        return getStringFromWasm0(r0, r1);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+        wasm.__wbindgen_free(r0, r1);
+    }
+};
+
+/**
+* Computes the Starkware version of the Pedersen hash of x and y. All inputs are big-endian.
+* Returns its Cairo representation.
+* https://github.com/xJonathanLEI/starknet-rs/blob/89a724f00ba6000120b17f68f6da0b4c982eea2f/starknet-crypto/src/pedersen_hash.rs#L19
+* @param {Uint8Array} x
+* @param {Uint8Array} y
+* @returns {string}
+*/
+module.exports.starknet_pedersen_cairo = function(x, y) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passArray8ToWasm0(x, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passArray8ToWasm0(y, wasm.__wbindgen_malloc);
+        const len1 = WASM_VECTOR_LEN;
+        wasm.starknet_pedersen_cairo(retptr, ptr0, len0, ptr1, len1);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         return getStringFromWasm0(r0, r1);

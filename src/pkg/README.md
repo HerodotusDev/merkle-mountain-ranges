@@ -1,12 +1,14 @@
-# Pedersen hashing
+# Pedersen Hash
 
-Two WASM-ported Pedersen hashing functions are exposed from this package:
+This library exposes the following functions:
 
 `pub fn pedersen(x: &str, y: &str) -> String`: [Geometry version](https://github.com/geometryresearch/starknet-signatures/blob/722c5987cb96aee80f230a97fed685194c97b7db/packages/prover/src/pedersen.rs).
 
-`pub fn og_pedersen(x: Vec<u8>, y: Vec<u8>) -> String`: Official Starknet Rust implementation.
+`pub fn starknet_pedersen(x: Vec<u8>, y: Vec<u8>) -> String`: [Starknet reference implementation](https://github.com/xJonathanLEI/starknet-rs/blob/89a724f00ba6000120b17f68f6da0b4c982eea2f/starknet-crypto/src/pedersen_hash.rs#L19)
 
-Note: the former returns an hex-padded string but the latter does not. Make sure the output match your expectation in case you want to use it.
+`pub fn starknet_pedersen_cairo(x: Vec<u8>, y: Vec<u8>) -> String`: Cairo output format of `starknet_pedersen`.
+
+Note: `pedersen` output is padded to 32 bytes. If an hex string is passed to it, it's expected to be big endian. Otherwise, all inputs are little-endian.
 
 ### Building pkg
 
@@ -14,9 +16,8 @@ Note: the former returns an hex-padded string but the latter does not. Make sure
 $> wasm-pack build --target nodejs --release
 ```
 
-### Example JS test
+### Running the benchmark
 
 ```sh
-$> ts-node index.ts
-###
+$> ts-node benchmark.ts
 ```

@@ -6,7 +6,7 @@ describe('RocksDB', () => {
     let db: any;
 
     before(async () => {
-        db = new RocksDB('./rocksdb');
+        db = new RocksDB('./rocksdb-db');
 
         await db.open({ createIfMissing: true });
         assert.equal(db.isOpen(), true);
