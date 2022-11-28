@@ -134,7 +134,7 @@ export class MMR {
 
         for (let idx = peaks.length - 1; idx >= 0; --idx) {
             const peak = await this.dbHGet('hashes', peaks[idx].toString());
-            bags = pedersen(bags || '', peak);
+            bags = pedersen(bags || '', peak || '');
         }
         const treeSize = lastPos;
         const rootHash = pedersen(treeSize.toString(), bags || '');

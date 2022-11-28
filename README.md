@@ -21,14 +21,16 @@ $> yarn add merkle-mountain-ranges
 ```typescript
 import { MMR } from 'merkle-mountain-ranges';
 
-async function main() {
-    const mmr = new RocksDBMMR(mmrConfig);
+function main() {
+    const mmr = new MMR();
 
-    mmmr.append('1');
+    mmr.append('1');
     const proof = mmr.getProof(1);
     mmr.verifyProof(proof);
     // ...
 }
+
+main();
 ```
 
 ### Redis usage example
