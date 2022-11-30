@@ -9,7 +9,7 @@ import {
     peakMapHeight,
     siblingOffset,
 } from '../../lib/helpers';
-import { MMRRocksDBConfig, MMRProof } from '../../lib/types';
+import { MMRRocksDBConfig, MMRProof, AppendResult } from '../../lib/types';
 
 export class MMR {
     db: any;
@@ -89,16 +89,17 @@ export class MMR {
         if (this.db.isOpen()) return this.db.close();
     }
 
-    async append(value: string): Promise<number> {
+    async append(value: string): Promise<AppendResult> {
         if (!this.db.isOperational())
             throw new Error('Database not operational');
 
         // Increment position
         let lastPos = await this.dbIncr('lastPos');
 
-        const hash = pedersen(lastPos.toString(), value);
-        await this.dbHSet('hashes', lastPos.toString(), hash);
-        await this.dbHSet('values', lastPos.toString(), value);
+        const leafIdx = lastPos.toString();
+        const hash = pedersen(leafIdx, value);
+        await this.dbHSet('hashes', leafIdx, hash);
+        await this.dbHSet('values', leafIdx, value);
 
         let height = 0;
 
@@ -133,7 +134,10 @@ export class MMR {
 
         const leaves = await this.dbIncr('leaves');
         // Returns the new total number of leaves.
-        return leaves;
+        return {
+            leavesCount: leaves,
+            leafIdx,
+        };
     }
 
     async bagThePeaks(peaks?: number[]): Promise<string> {

@@ -41,6 +41,7 @@ describe('Large trees', () => {
 
     it('should append 100 leaves to a new tree', async () => {
         const leaves = 100;
+
         for (let i = 1; i <= leaves; i++) {
             await mmr.append(i.toString());
         }

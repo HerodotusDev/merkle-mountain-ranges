@@ -36,3 +36,8 @@ export type MMRRocksDBConfig = {
     dbInstance?: any; // RocksDB instance;
     treeUuid?: string; // Will restore an existing tree from db.
 };
+
+export type AppendResult = {
+    leavesCount: number;
+    leafIdx: string;
+};

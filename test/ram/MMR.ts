@@ -1,6 +1,25 @@
 import assert from 'assert';
 import { pedersen } from '../../src/pkg/pedersen_wasm.js';
 import { MMR } from '../../src/mmrs/ram';
+import { findPeaks } from '../../src/lib/helpers';
+
+describe('Interoperability test', () => {
+    let mmr: MMR;
+
+    before(() => {
+        mmr = new MMR();
+    });
+
+    it('should generate a Starknet-compatible proof', () => {
+        mmr.append('1');
+        mmr.append('2');
+        mmr.append(
+            '0x023bdb5946139d74f6274240e80691f7449978553c5f47f48a9e9b63cb1e1f7c'
+        );
+        const p = mmr.getProof(4);
+        mmr.verifyProof(p);
+    });
+});
 
 describe('Append elements to the tree', function () {
     let mmr: MMR;
@@ -10,37 +29,37 @@ describe('Append elements to the tree', function () {
     });
 
     it('append 1', function () {
-        assert.equal(mmr.append('1'), '1');
+        assert.equal(mmr.append('1').leafIdx, '1');
         assert.equal(mmr.lastPos, '1');
     });
 
     it('append 2', function () {
-        assert.equal(mmr.append('2'), '2');
+        assert.equal(mmr.append('2').leafIdx, '2');
         assert.equal(mmr.lastPos, '3');
     });
 
     it('append 4', function () {
-        assert.equal(mmr.append('4'), '4');
+        assert.equal(mmr.append('4').leafIdx, '4');
         assert.equal(mmr.lastPos, '4');
     });
 
     it('append 5', function () {
-        assert.equal(mmr.append('5'), '5');
+        assert.equal(mmr.append('5').leafIdx, '5');
         assert.equal(mmr.lastPos, '7');
     });
 
     it('append 8', function () {
-        assert.equal(mmr.append('8'), '8');
+        assert.equal(mmr.append('8').leafIdx, '8');
         assert.equal(mmr.lastPos, '8');
     });
 
     it('append 9', function () {
-        assert.equal(mmr.append('9'), '9');
+        assert.equal(mmr.append('9').leafIdx, '9');
         assert.equal(mmr.lastPos, '10');
     });
 
     it('append 11', function () {
-        assert.equal(mmr.append('11'), '11');
+        assert.equal(mmr.append('11').leafIdx, '11');
         assert.equal(mmr.lastPos, '11');
     });
 });

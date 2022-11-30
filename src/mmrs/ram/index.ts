@@ -7,7 +7,7 @@ import {
     peakMapHeight,
     siblingOffset,
 } from '../../lib/helpers';
-import { Hashes, Leaves, MMRProof } from '../../lib/types';
+import { AppendResult, Hashes, Leaves, MMRProof } from '../../lib/types';
 
 export class MMR {
     hashes: Hashes;
@@ -24,7 +24,7 @@ export class MMR {
         this.leaves = 0;
     }
 
-    append(value: string) {
+    append(value: string): AppendResult {
         // Increment position
         this.lastPos++;
 
@@ -56,7 +56,10 @@ export class MMR {
         this.rootHash = this.bagThePeaks();
 
         ++this.leaves;
-        return pos;
+        return {
+            leavesCount: this.leaves,
+            leafIdx: pos.toString(),
+        };
     }
 
     bagThePeaks(peaks = findPeaks(this.lastPos)): string {
