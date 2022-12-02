@@ -10,8 +10,9 @@ import {
     siblingOffset,
 } from '../../lib/helpers';
 import { RedisMMRConfig, MMRProof, AppendResult } from '../../lib/types';
+import { IMMR } from '../interface';
 
-export class MMR {
+export class MMR implements IMMR {
     db: RedisClientType;
     uuid: string;
     withRootHash: boolean; // Will bag the peaks if set to true.

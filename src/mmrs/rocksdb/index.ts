@@ -10,8 +10,9 @@ import {
     siblingOffset,
 } from '../../lib/helpers';
 import { MMRRocksDBConfig, MMRProof, AppendResult } from '../../lib/types';
+import { IMMR } from '../interface';
 
-export class MMR {
+export class MMR implements IMMR {
     db: any;
     uuid: string;
     withRootHash: boolean; // Will bag the peaks if set to true.

@@ -8,8 +8,9 @@ import {
     siblingOffset,
 } from '../../lib/helpers';
 import { AppendResult, Hashes, Leaves, MMRProof } from '../../lib/types';
+import { IMMR } from '../interface';
 
-export class MMR {
+export class MMR implements IMMR {
     hashes: Hashes;
     values: Leaves;
     rootHash: string;
@@ -24,7 +25,7 @@ export class MMR {
         this.leaves = 0;
     }
 
-    append(value: string): AppendResult {
+    async append(value: string): Promise<AppendResult> {
         // Increment position
         this.lastPos++;
 
@@ -53,7 +54,7 @@ export class MMR {
         }
 
         // Compute the new root hash
-        this.rootHash = this.bagThePeaks();
+        this.rootHash = await this.bagThePeaks();
 
         ++this.leaves;
         return {
@@ -62,7 +63,7 @@ export class MMR {
         };
     }
 
-    bagThePeaks(peaks = findPeaks(this.lastPos)): string {
+    async bagThePeaks(peaks = findPeaks(this.lastPos)): Promise<string> {
         if (!peaks.length) throw new Error('Expected peaks to bag');
 
         let bags = this.hashes[peaks[peaks.length - 1]];
@@ -84,7 +85,7 @@ export class MMR {
         return (peak_map & peak) === 0;
     }
 
-    getProof(idx: number): MMRProof {
+    async getProof(idx: number): Promise<MMRProof> {
         if (idx <= 0) throw new Error('Index starts at one');
         if (idx > this.lastPos) throw new Error('Index out of range');
         if (!this.isLeaf(idx)) throw new Error('Expected a leaf node');
@@ -128,7 +129,7 @@ export class MMR {
         };
     }
 
-    verifyProof(proof: MMRProof) {
+    async verifyProof(proof: MMRProof) {
         let hash = pedersen(proof.index.toString(), proof.value);
         const storedHash = this.hashes[proof.index];
         if (hash !== storedHash) {
@@ -164,7 +165,8 @@ export class MMR {
             hash = parentHash;
             siblingN += 1;
         }
-        if (this.bagThePeaks(proof.peaks) !== this.rootHash) {
+        const topHash = await this.bagThePeaks(proof.peaks);
+        if (topHash !== this.rootHash) {
             throw new Error('Top hash is not equal to this MMR root hash');
         }
     }
