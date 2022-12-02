@@ -10,14 +10,14 @@ describe('Interoperability test', () => {
         mmr = new MMR();
     });
 
-    it('should generate a Starknet-compatible proof', () => {
-        mmr.append('1');
-        mmr.append('2');
-        mmr.append(
+    it('should generate a Starknet-compatible proof', async () => {
+        await mmr.append('1');
+        await mmr.append('2');
+        await mmr.append(
             '0x023bdb5946139d74f6274240e80691f7449978553c5f47f48a9e9b63cb1e1f7c'
         );
-        const p = mmr.getProof(4);
-        mmr.verifyProof(p);
+        const p = await mmr.getProof(4);
+        await mmr.verifyProof(p);
     });
 });
 
@@ -28,38 +28,45 @@ describe('Append elements to the tree', function () {
         mmr = new MMR();
     });
 
-    it('append 1', function () {
-        assert.equal(mmr.append('1').leafIdx, '1');
+    it('append 1', async function () {
+        const { leafIdx } = await mmr.append('1');
+        assert.equal(leafIdx, '1');
         assert.equal(mmr.lastPos, '1');
     });
 
-    it('append 2', function () {
-        assert.equal(mmr.append('2').leafIdx, '2');
+    it('append 2', async function () {
+        const { leafIdx } = await mmr.append('2');
+        assert.equal(leafIdx, '2');
         assert.equal(mmr.lastPos, '3');
     });
 
-    it('append 4', function () {
-        assert.equal(mmr.append('4').leafIdx, '4');
+    it('append 4', async function () {
+        const { leafIdx } = await mmr.append('4');
+        assert.equal(leafIdx, '4');
         assert.equal(mmr.lastPos, '4');
     });
 
-    it('append 5', function () {
-        assert.equal(mmr.append('5').leafIdx, '5');
+    it('append 5', async function () {
+        const { leafIdx } = await mmr.append('5');
+        assert.equal(leafIdx, '5');
         assert.equal(mmr.lastPos, '7');
     });
 
-    it('append 8', function () {
-        assert.equal(mmr.append('8').leafIdx, '8');
+    it('append 8', async function () {
+        const { leafIdx } = await mmr.append('8');
+        assert.equal(leafIdx, '8');
         assert.equal(mmr.lastPos, '8');
     });
 
-    it('append 9', function () {
-        assert.equal(mmr.append('9').leafIdx, '9');
+    it('append 9', async function () {
+        const { leafIdx } = await mmr.append('9');
+        assert.equal(leafIdx, '9');
         assert.equal(mmr.lastPos, '10');
     });
 
-    it('append 11', function () {
-        assert.equal(mmr.append('11').leafIdx, '11');
+    it('append 11', async function () {
+        const { leafIdx } = await mmr.append('11');
+        assert.equal(leafIdx, '11');
         assert.equal(mmr.lastPos, '11');
     });
 });
@@ -71,18 +78,18 @@ describe('Node content (hashes)', function () {
         mmr = new MMR();
     });
 
-    it('1 leaf', function () {
+    it('1 leaf', async function () {
         const elem = '1';
-        mmr.append(elem);
+        await mmr.append(elem);
         assert.equal(mmr.hashes[1], pedersen('1', elem));
         assert.equal(1, mmr.leaves);
     });
 
-    it('2 leaves', function () {
+    it('2 leaves', async function () {
         const elems = 2;
 
         for (let i = 1; i <= elems; i++) {
-            mmr.append(i.toString());
+            await mmr.append(i.toString());
         }
 
         const nodes = [];
@@ -96,11 +103,11 @@ describe('Node content (hashes)', function () {
         assert.equal(elems, mmr.leaves);
     });
 
-    it('3 leaves', function () {
+    it('3 leaves', async function () {
         const elems = 3;
 
         for (let i = 1; i <= elems; i++) {
-            mmr.append(i.toString());
+            await mmr.append(i.toString());
         }
 
         const nodes = [];
@@ -115,11 +122,11 @@ describe('Node content (hashes)', function () {
         assert.equal(elems, mmr.leaves);
     });
 
-    it('4 leaves', function () {
+    it('4 leaves', async function () {
         const elems = 4;
 
         for (let i = 1; i <= elems; i++) {
-            mmr.append(i.toString());
+            await mmr.append(i.toString());
         }
 
         const nodes = [];
@@ -137,11 +144,11 @@ describe('Node content (hashes)', function () {
         assert.equal(elems, mmr.leaves);
     });
 
-    it('5 leaves', function () {
+    it('5 leaves', async function () {
         const elems = 5;
 
         for (let i = 1; i <= elems; i++) {
-            mmr.append(i.toString());
+            await mmr.append(i.toString());
         }
 
         const nodes = [];

@@ -1,5 +1,6 @@
-import { MMR as MMR } from './mmrs/ram';
+import { MMR as InMemoryMMR } from './mmrs/ram';
 import { MMR as RedisMMR } from './mmrs/redis';
 import { MMR as RocksDBMMR } from './mmrs/rocksdb';
+import { IMMR } from './mmrs/interface';
 
-export { MMR, RedisMMR, RocksDBMMR };
+export { InMemoryMMR, RedisMMR, RocksDBMMR, IMMR };
