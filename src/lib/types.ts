@@ -33,11 +33,27 @@ export type RedisMMRConfig = {
 export type MMRRocksDBConfig = {
     withRootHash: boolean;
     location: string; // Database directory location (on disk).
-    dbInstance?: any; // RocksDB instance;
+    dbInstance?: any; // RocksDB instance.
     treeUuid?: string; // Will restore an existing tree from db.
 };
 
 export type AppendResult = {
     leavesCount: number;
     leafIdx: string;
+    rootHash: string | undefined;
+    lastPos: number; // == tree size.
+};
+
+export type AppendTransaction = {
+    values: string[];
+    leafIndexes: string[];
+    rootHashes: string[];
+    lastPoses: string[];
+};
+
+export type SaveAppendTransactionOptions = {
+    saveValues: boolean;
+    saveLeafIndexes: boolean;
+    onlySaveLastRootHash: boolean;
+    onlySaveLastPos: boolean;
 };

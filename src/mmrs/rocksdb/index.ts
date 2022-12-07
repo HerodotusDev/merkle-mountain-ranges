@@ -9,7 +9,13 @@ import {
     peakMapHeight,
     siblingOffset,
 } from '../../lib/helpers';
-import { MMRRocksDBConfig, MMRProof, AppendResult } from '../../lib/types';
+import {
+    MMRRocksDBConfig,
+    MMRProof,
+    AppendResult,
+    AppendTransaction,
+    SaveAppendTransactionOptions,
+} from '../../lib/types';
 import { IMMR } from '../interface';
 
 export class MMR implements IMMR {
@@ -90,6 +96,69 @@ export class MMR implements IMMR {
         if (this.db.isOpen()) return this.db.close();
     }
 
+    async saveTransaction(
+        transactionId: string,
+        appends: AppendTransaction,
+        options: SaveAppendTransactionOptions = {
+            saveValues: true,
+            saveLeafIndexes: true,
+            onlySaveLastRootHash: true,
+            onlySaveLastPos: true,
+        }
+    ) {
+        if (!this.db.isOperational())
+            throw new Error('Database not operational');
+
+        await this.db.batch([
+            {
+                type: 'put',
+                key: `${this.uuid}.${transactionId}`,
+                value: options.saveValues ? appends.values : [],
+            },
+            {
+                type: 'put',
+                key: `${this.uuid}.${transactionId}.lastPoses`,
+                value: options.onlySaveLastPos
+                    ? appends.lastPoses[appends.lastPoses.length - 1]
+                    : appends.lastPoses,
+            },
+            {
+                type: 'put',
+                key: `${this.uuid}.${transactionId}.leafIndexes`,
+                value: options.saveLeafIndexes ? appends.leafIndexes : [],
+            },
+            {
+                type: 'put',
+                key: `${this.uuid}.${transactionId}.rootHashes`,
+                value: options.onlySaveLastRootHash
+                    ? appends.rootHashes[appends.rootHashes.length - 1]
+                    : appends.rootHashes,
+            },
+        ]);
+    }
+
+    async retrieveTransaction(
+        transactionId: string
+    ): Promise<AppendTransaction> {
+        if (!this.db.isOperational())
+            throw new Error('Database not operational');
+
+        const [values, lastPoses, leafIndexes, rootHashes] =
+            await this.db.getMany([
+                `${this.uuid}.${transactionId}`,
+                `${this.uuid}.${transactionId}.lastPoses`,
+                `${this.uuid}.${transactionId}.leafIndexes`,
+                `${this.uuid}.${transactionId}.rootHashes`,
+            ]);
+
+        return {
+            values: values?.split(','),
+            lastPoses: lastPoses?.split(','),
+            leafIndexes: leafIndexes?.split(','),
+            rootHashes: rootHashes?.split(','),
+        } as AppendTransaction;
+    }
+
     async append(value: string): Promise<AppendResult> {
         if (!this.db.isOperational())
             throw new Error('Database not operational');
@@ -130,21 +199,29 @@ export class MMR implements IMMR {
         await this.dbSet('lastPos', lastPos);
 
         // Compute the new root hash
-        if (this.withRootHash)
-            await this.dbSet('rootHash', await this.bagThePeaks());
+        let rootHash;
+        if (this.withRootHash) {
+            rootHash = await this.bagThePeaks();
+            await this.dbSet('rootHash', rootHash);
+        }
 
         const leaves = await this.dbIncr('leaves');
         // Returns the new total number of leaves.
         return {
             leavesCount: leaves,
             leafIdx,
+            rootHash,
+            lastPos, // Tree size
         };
     }
 
-    async bagThePeaks(peaks?: number[]): Promise<string> {
+    async bagThePeaks(
+        peaks?: number[],
+        givenLastPos?: number
+    ): Promise<string> {
         if (!this.db.isOperational())
             throw new Error('Database not operational');
-        const lastPos = Number(await this.dbGet('lastPos'));
+        const lastPos = givenLastPos ?? Number(await this.dbGet('lastPos'));
         if (!peaks) {
             peaks = findPeaks(lastPos);
         }
@@ -173,7 +250,7 @@ export class MMR implements IMMR {
         return (peak_map & peak) === 0;
     }
 
-    async getProof(idx: number): Promise<MMRProof> {
+    async getProof(idx: number, givenLastPos?: number): Promise<MMRProof> {
         if (!this.db.isOperational())
             throw new Error('Database not operational');
 
@@ -181,12 +258,14 @@ export class MMR implements IMMR {
         const lastPos = Number(await this.dbGet('lastPos'));
         if (idx > lastPos) throw new Error('Index out of range');
         if (!this.isLeaf(idx)) throw new Error('Expected a leaf node');
+        if (givenLastPos && givenLastPos > lastPos)
+            throw new Error('Last pos out of range');
 
         const index = idx;
         const value = await this.dbHGet('values', idx.toString());
         if (!value) throw new Error(`Expected value for index ${idx}`);
 
-        const peaks = findPeaks(lastPos);
+        const peaks = findPeaks(givenLastPos ?? lastPos);
         const peaksHashesPromises = peaks.map(
             // @ts-ignore
             (p): Promise<string> => this.dbHGet('hashes', p.toString())
@@ -231,9 +310,16 @@ export class MMR implements IMMR {
         };
     }
 
-    async verifyProof(proof: MMRProof) {
+    async verifyProof(
+        proof: MMRProof,
+        givenLastPos?: number,
+        expectedRootHash?: string
+    ) {
         if (!this.db.isOperational())
             throw new Error('Database not operational');
+        if (givenLastPos && givenLastPos > Number(await this.dbGet('lastPos')))
+            throw new Error('Last pos out of range');
+
         let hash = pedersen(proof.index.toString(), proof.value);
         const storedHash = await this.dbHGet('hashes', proof.index.toString());
         if (hash !== storedHash) {
@@ -275,8 +361,6 @@ export class MMR implements IMMR {
                 parentIdx.toString()
             );
             if (parentHash !== storedParentHash) {
-                console.log(proof);
-                console.table({ parentHash, storedParentHash, parentIdx });
                 throw new Error('Parent mismatch');
             }
             idx = parentIdx; // Jump to parent
@@ -284,8 +368,14 @@ export class MMR implements IMMR {
             siblingN += 1;
         }
         if (this.withRootHash) {
-            const storedRootHash = await this.dbGet('rootHash');
-            if ((await this.bagThePeaks(proof.peaks)) !== storedRootHash) {
+            const storedRootHash =
+                expectedRootHash ?? (await this.dbGet('rootHash'));
+            if (
+                (await this.bagThePeaks(
+                    proof.peaks,
+                    givenLastPos ?? undefined
+                )) !== storedRootHash
+            ) {
                 throw new Error('Top hash is not equal to this MMR root hash');
             }
         }
