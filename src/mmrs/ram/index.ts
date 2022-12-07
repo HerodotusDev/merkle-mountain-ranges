@@ -60,6 +60,8 @@ export class MMR implements IMMR {
         return {
             leavesCount: this.leaves,
             leafIdx: pos.toString(),
+            rootHash: this.rootHash,
+            lastPos: this.lastPos,
         };
     }
 

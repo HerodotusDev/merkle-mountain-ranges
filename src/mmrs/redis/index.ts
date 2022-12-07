@@ -114,14 +114,19 @@ export class MMR implements IMMR {
         await this.dbSet('lastPos', lastPos);
 
         // Compute the new root hash
-        if (this.withRootHash)
-            await this.dbSet('rootHash', await this.bagThePeaks());
+        let rootHash;
+        if (this.withRootHash) {
+            rootHash = await this.bagThePeaks();
+            await this.dbSet('rootHash', rootHash);
+        }
 
         const leaves = await this.dbIncr('leaves');
         // Returns the new total number of leaves.
         return {
             leavesCount: leaves,
             leafIdx,
+            rootHash,
+            lastPos,
         };
     }
 
