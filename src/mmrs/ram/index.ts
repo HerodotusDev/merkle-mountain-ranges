@@ -172,4 +172,21 @@ export class MMR implements IMMR {
             throw new Error('Top hash is not equal to this MMR root hash');
         }
     }
+
+    retrievePeaksIndexes(givenLastPos?: number): number[] {
+        const lastPos = givenLastPos ?? this.lastPos;
+        const peaksIndexes = findPeaks(lastPos);
+        return peaksIndexes;
+    }
+
+    retrievePeaksHashes(givenLastPos?: number): string[] {
+        if (givenLastPos && givenLastPos > this.lastPos)
+            throw new Error('Given position cannot exceed last position');
+        const lastPos = givenLastPos ?? this.lastPos;
+        const peaksIndexes = findPeaks(lastPos);
+        const peaksHashes = peaksIndexes.map(
+            (peakIdx: number) => this.hashes[peakIdx]
+        );
+        return peaksHashes;
+    }
 }

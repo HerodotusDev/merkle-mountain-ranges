@@ -380,4 +380,22 @@ export class MMR implements IMMR {
             }
         }
     }
+
+    async retrievePeaksIndexes(givenLastPos?: number): Promise<number[]> {
+        const lastPos = givenLastPos ?? Number(await this.dbGet('lastPos'));
+        const peaksIndexes = findPeaks(lastPos);
+        return peaksIndexes;
+    }
+
+    async retrievePeaksHashes(givenLastPos?: number): Promise<string[]> {
+        if (givenLastPos && givenLastPos > Number(await this.dbGet('lastPos')))
+            throw new Error('Given position cannot exceed last position');
+        const lastPos = givenLastPos ?? Number(await this.dbGet('lastPos'));
+        const peaksIndexes = findPeaks(lastPos);
+        const peaksHashesPromises = peaksIndexes.map(
+            (p): Promise<string> => this.dbHGet('hashes', p.toString())
+        );
+        const peaksHashes = await Promise.all(peaksHashesPromises);
+        return peaksHashes;
+    }
 }
